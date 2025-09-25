@@ -1,5 +1,446 @@
 ---
-description:
-globs:
+description: Reglas y patrones para el desarrollo de Stored Procedures de los 5 niveles jerárquicos
+globs: ["**/*.sql"]
 alwaysApply: true
 ---
+
+# Guía de Desarrollo de Stored Procedures - Niveles Jerárquicos
+
+## Estructura de Niveles
+- **Nivel 1**: Lugares de Pago (lugarespago)
+- **Nivel 2**: Departamentos (departamentos) 
+- **Nivel 3**: Centros de Costo (centroscosto)
+- **Nivel 4**: Divisiones (division)
+- **Nivel 5**: Quinto Nivel (quintonivel)
+
+## Patrones de Nomenclatura
+
+### Naming Convention para SPs
+- **Agregar**: `sp_{tabla}_agregar`
+- **Eliminar**: `sp_{tabla}_eliminar`
+- **Listado**: `sp_{tabla}_listado`
+- **Listado Paginado**: `sp_{tabla}_listadopaginado`
+- **Modificar**: `sp_{tabla}_modificar`
+- **Obtener**: `sp_{tabla}_obtener`
+- **Obtener Alternativo**: `sp_{tabla}_obtener2`
+- **Total Paginado**: `sp_{tabla}_totalpaginado`
+- **Descarga Masiva**: `sp_descargaMasiva_listado_{tabla}`
+
+### Naming Convention para Parámetros
+- **Cursor**: `p_refcursor`
+- **IDs**: `p_p{tabla}id` (ej: p_plugarpagoid, p_pdepartamentoid)
+- **Nombres**: `p_pnombre{tabla}` (ej: p_pnombrelugarpago)
+- **Empresa**: `p_pempresaid`
+- **Usuario**: `p_pusuarioid`
+- **Paginación**: `p_pagina`, `p_decuantos`
+- **Debug**: `p_debug`
+
+## Estructura de Claves Primarias
+
+### Jerarquía de Dependencias
+```
+Empresa (empresaid)
+└── Lugar de Pago (lugarpagoid + empresaid)
+    └── Departamento (departamentoid + lugarpagoid + empresaid)
+        └── Centro de Costo (centrocostoid + departamentoid + lugarpagoid + empresaid)
+            └── División (divisionid + centrocostoid + departamentoid + lugarpagoid + empresaid)
+                └── Quinto Nivel (quintonivelid + divisionid + centrocostoid + departamentoid + lugarpagoid + empresaid)
+```
+
+### Claves Compuestas por Nivel
+- **Nivel 1**: `(lugarpagoid, empresaid)`
+- **Nivel 2**: `(departamentoid, lugarpagoid, empresaid)`
+- **Nivel 3**: `(centrocostoid, departamentoid, lugarpagoid, empresaid)`
+- **Nivel 4**: `(divisionid, centrocostoid, departamentoid, lugarpagoid, empresaid)`
+- **Nivel 5**: `(quintonivelid, divisionid, centrocostoid, departamentoid, lugarpagoid, empresaid)`
+
+## Patrones de Implementación
+
+### 1. SP Agregar
+```sql
+-- Estructura base para sp_{tabla}_agregar
+CREATE OR REPLACE FUNCTION public.sp_{tabla}_agregar(
+    p_refcursor refcursor,
+    p_p{tabla}id character varying,
+    p_pnombre{tabla} character varying,
+    p_pempresaid character varying,
+    -- Parámetros adicionales según nivel
+    p_pusuarioid character varying,
+    p_debug integer DEFAULT 0
+)
+RETURNS refcursor
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    var_mensaje text := '';
+    var_error   integer := 0;
+BEGIN
+    -- 1) Verificar que no exista ya (usar claves compuestas)
+    -- 2) Intentar insertar con fechacreacion = now()
+    -- 3) Manejo de excepciones
+    -- 4) Devolver resultado en cursor
+END;
+$BODY$;
+```
+
+### 2. SP Eliminar
+```sql
+-- Estructura base para sp_{tabla}_eliminar
+CREATE OR REPLACE FUNCTION public.sp_{tabla}_eliminar(
+    p_refcursor refcursor,
+    p_pempresaid character varying,
+    -- Parámetros de claves según nivel
+    p_pusuarioid character varying
+)
+RETURNS refcursor
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    var_mensaje text := '';
+    var_error   integer := 0;
+BEGIN
+    -- 1) Verificar que exista
+    -- 2) Verificar que no tenga dependencias (nivel inferior)
+    -- 3) Intentar eliminar
+    -- 4) Manejo de excepciones
+END;
+$BODY$;
+```
+
+### 3. SP Listado
+```sql
+-- Estructura base para sp_{tabla}_listado
+CREATE OR REPLACE FUNCTION public.sp_{tabla}_listado(
+    p_refcursor refcursor,
+    pempresaid character varying,
+    -- Parámetros de filtro según nivel
+)
+RETURNS refcursor
+LANGUAGE 'plpgsql'
+AS $BODY$
+BEGIN
+    OPEN p_refcursor FOR
+        SELECT 
+            {tabla}.{tabla}id AS "{tabla}id",
+            {tabla}.nombre{tabla} AS "nombre{tabla}",
+            -- Campos adicionales según nivel
+            ('''' || {tabla}.{tabla}id || '''') AS "cc"
+        FROM {tabla}
+        WHERE 
+            {tabla}.empresaid = pempresaid
+            -- Filtros adicionales según nivel
+        ORDER BY {tabla}.nombre{tabla};
+    
+    RETURN p_refcursor;
+EXCEPTION WHEN OTHERS THEN
+    OPEN p_refcursor FOR SELECT SQLERRM AS "mensaje";
+    RETURN p_refcursor;
+END;
+$BODY$;
+```
+
+### 4. SP Listado Paginado
+```sql
+-- Estructura base para sp_{tabla}_listadopaginado
+CREATE OR REPLACE FUNCTION public.sp_{tabla}_listadopaginado(
+    p_refcursor refcursor,
+    p_pagina integer,
+    p_decuantos integer,
+    p_p{tabla}id character varying,
+    p_pnombre{tabla} character varying,
+    -- Filtros adicionales según nivel
+    p_pempresaid character varying,
+    p_debug smallint DEFAULT 0
+)
+RETURNS refcursor
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    var_Pinicio int := (p_pagina - 1) * p_decuantos + 1;
+    var_Pfin    int := p_pagina * p_decuantos;
+BEGIN
+    OPEN p_refcursor FOR
+    WITH DocumentosTabla AS (
+        SELECT
+            {tabla}.{tabla}id as "id{Tabla}",
+            {tabla}.{tabla}id as {tabla}id,
+            {tabla}.nombre{tabla},
+            -- JOINs con niveles superiores
+            ROW_NUMBER() OVER (ORDER BY {tabla}.nombre{tabla}) AS RowNum
+        FROM {tabla}
+        -- JOINs según nivel
+        WHERE
+            -- Filtros flexibles (ID exacto o búsqueda por nombre)
+            (p_p{tabla}id = '' OR p_p{tabla}id = '0' 
+             OR {tabla}.{tabla}id = p_p{tabla}id 
+             OR {tabla}.nombre{tabla} ILIKE '%' || p_p{tabla}id || '%')
+        AND 
+            (p_pnombre{tabla} = '' 
+             OR {tabla}.nombre{tabla} ILIKE '%' || p_pnombre{tabla} || '%')
+        -- Filtros adicionales según nivel
+    )
+    SELECT
+        "id{Tabla}",
+        {tabla}id,
+        nombre{tabla},
+        -- Campos adicionales
+        RowNum
+    FROM DocumentosTabla
+    WHERE RowNum BETWEEN var_Pinicio AND var_Pfin
+    ORDER BY {tabla}id ASC;
+
+    RETURN p_refcursor;
+END;
+$BODY$;
+```
+
+### 5. SP Modificar
+```sql
+-- Estructura base para sp_{tabla}_modificar
+CREATE OR REPLACE FUNCTION public.sp_{tabla}_modificar(
+    p_refcursor refcursor,
+    p_p{tabla}id character varying,
+    p_pnombre{tabla} character varying,
+    p_pempresaid character varying,
+    -- Parámetros de claves según nivel
+    p_pusuarioid character varying,
+    p_debug integer DEFAULT 0
+)
+RETURNS refcursor
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    var_mensaje text := '';
+    var_error   integer := 0;
+BEGIN
+    -- 1) Verificar que exista
+    -- 2) Intentar actualizar (solo campos permitidos)
+    -- 3) Actualizar fechamodificacion = now() y usuarioidmodificacion
+    -- 4) Manejo de excepciones
+END;
+$BODY$;
+```
+
+### 6. SP Obtener
+```sql
+-- Estructura base para sp_{tabla}_obtener
+CREATE OR REPLACE FUNCTION public.sp_{tabla}_obtener(
+    p_refcursor refcursor,
+    p_p{tabla}id character varying,
+    -- Parámetros de claves según nivel
+    p_pempresaid character varying
+)
+RETURNS refcursor
+LANGUAGE 'plpgsql'
+AS $BODY$
+BEGIN
+    OPEN p_refcursor FOR
+        SELECT 
+            {tabla}.{tabla}id,
+            {tabla}.nombre{tabla},
+            {tabla}.empresaid,
+            -- Campos adicionales según nivel
+            -- JOINs con niveles superiores para nombres descriptivos
+            -- Información de auditoría
+        FROM {tabla}
+        -- JOINs según nivel
+        WHERE {tabla}.{tabla}id = p_p{tabla}id
+          -- Filtros adicionales según nivel
+    
+    RETURN p_refcursor;
+EXCEPTION WHEN OTHERS THEN
+    OPEN p_refcursor FOR SELECT SQLERRM AS "mensaje";
+    RETURN p_refcursor;
+END;
+$BODY$;
+```
+
+### 7. SP Total Paginado
+```sql
+-- Estructura base para sp_{tabla}_totalpaginado
+CREATE OR REPLACE FUNCTION public.sp_{tabla}_totalpaginado(
+    p_refcursor refcursor,
+    p_pagina integer,
+    p_decuantos integer,
+    p_p{tabla}id character varying,
+    p_pnombre{tabla} character varying,
+    -- Filtros adicionales según nivel
+    p_pempresaid character varying,
+    p_debug smallint DEFAULT 0
+)
+RETURNS refcursor
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    var_totalorig   bigint;
+    var_division    numeric;
+    var_remainder   numeric;
+    var_totalpages  integer;
+BEGIN
+    -- 1) Conteo total con todos los filtros (mismos que listadopaginado)
+    -- 2) Cálculo de páginas con manejo de decimales
+    -- 3) Devolver total de páginas y total de registros
+END;
+$BODY$;
+```
+
+### 8. SP Descarga Masiva
+```sql
+-- Estructura base para sp_descargaMasiva_listado_{tabla}
+CREATE OR REPLACE FUNCTION public.sp_descargaMasiva_listado_{tabla}(
+    p_refcursor refcursor,
+    p_pagina integer,
+    p_decuantos numeric,
+    p_pusuarioid character varying,
+    p_idproceso integer,
+    p_debug smallint DEFAULT 0
+)
+RETURNS refcursor
+LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    var_cursor ALIAS FOR p_refcursor;
+    var_pinicio INTEGER;
+    var_pfin INTEGER;
+BEGIN
+    -- 1) Cálculo de rangos para paginación
+    -- 2) Consulta con control de estado (DescargaMasiva_Consulta)
+    -- 3) Formato de salida separado por pipes (|)
+    -- 4) Actualización de estado de registros procesados
+END;
+$BODY$;
+```
+
+## Códigos de Error Estándar
+
+### Códigos de Error Comunes
+- **0**: Operación exitosa
+- **1**: Registro no existe / Ya existe (según operación)
+- **2**: Error de base de datos / Excepción
+- **3**: Tiene dependencias (no se puede eliminar)
+- **4**: Error de validación de datos
+- **5**: Error de permisos
+
+### Mensajes de Error Estándar
+- **Agregar**: "El {Nivel} ya existe"
+- **Eliminar**: "El {Nivel} no existe" / "No se puede eliminar el {Nivel} porque tiene {Nivel Inferior} asociados"
+- **Modificar**: "El {Nivel} no existe"
+- **General**: "Error al {operación} {nivel}: {SQLERRM}"
+
+## Campos de Auditoría Estándar
+
+### Campos Obligatorios
+- `fechacreacion`: TIMESTAMP DEFAULT now()
+- `usuarioid`: VARCHAR (usuario que crea)
+- `fechamodificacion`: TIMESTAMP (se actualiza en modificaciones)
+- `usuarioidmodificacion`: VARCHAR (usuario que modifica)
+
+### Campos Opcionales por Nivel
+- **Nivel 1**: `direccion`, `comuna`, `ciudad`
+- **Nivel 2**: `direccion`, `comuna`, `ciudad`
+- **Nivel 3**: `direccion`, `comuna`, `ciudad`
+- **Nivel 4**: Campos específicos según requerimientos
+- **Nivel 5**: Campos específicos según requerimientos
+
+## Reglas de Validación
+
+### Validaciones Obligatorias
+1. **Existencia**: Verificar existencia antes de modificar/eliminar
+2. **Unicidad**: Verificar unicidad antes de agregar
+3. **Integridad Referencial**: Verificar dependencias antes de eliminar
+4. **Campos Requeridos**: Validar que campos obligatorios no estén vacíos
+
+### Validaciones por Nivel
+- **Nivel 1**: Validar que empresa exista
+- **Nivel 2**: Validar que lugar de pago y empresa existan
+- **Nivel 3**: Validar que departamento, lugar de pago y empresa existan
+- **Nivel 4**: Validar que centro de costo y niveles superiores existan
+- **Nivel 5**: Validar que división y niveles superiores existan
+
+## Consideraciones de Performance
+
+### Índices Recomendados
+- Índices compuestos en las claves primarias
+- Índices en campos de búsqueda frecuente (nombres)
+- Índices en campos de filtro (empresaid, lugarpagoid, etc.)
+
+### Optimizaciones
+- Usar LIMIT y OFFSET para paginación
+- Aplicar filtros en WHERE antes de JOINs
+- Usar ILIKE solo cuando sea necesario
+- Considerar índices parciales para filtros comunes
+
+## Patrones de JOIN
+
+### JOINs por Nivel
+- **Nivel 1**: JOIN con empresas
+- **Nivel 2**: JOIN con empresas y lugarespago
+- **Nivel 3**: JOIN con empresas, lugarespago y departamentos
+- **Nivel 4**: JOIN con empresas, lugarespago, departamentos y centroscosto
+- **Nivel 5**: JOIN con empresas, lugarespago, departamentos, centroscosto y division
+
+### Alias de Tablas
+- **Empresas**: `e`
+- **Lugares de Pago**: `lp`
+- **Departamentos**: `dp`
+- **Centros de Costo**: `cc`
+- **Divisiones**: `d`
+- **Quinto Nivel**: `qn`
+
+## Consideraciones de Seguridad
+
+### Validaciones de Entrada
+- Sanitizar parámetros de entrada
+- Validar tipos de datos
+- Verificar rangos de valores
+- Prevenir inyección SQL
+
+### Control de Acceso
+- Validar permisos de usuario
+- Registrar operaciones críticas
+- Implementar logging de auditoría
+
+## Mantenimiento y Debugging
+
+### Parámetro de Debug
+- Implementar en todos los SPs
+- Usar RAISE NOTICE para información de debug
+- Incluir valores de parámetros en mensajes de debug
+
+### Logging
+- Registrar operaciones importantes
+- Incluir timestamps y usuarios
+- Mantener logs de errores detallados
+
+## Ejemplos de Uso
+
+### Llamada Típica a SP Agregar
+```sql
+SELECT sp_lugarespago_agregar(
+    'cursor1'::refcursor,
+    'LP001',
+    'Oficina Central',
+    '12345678-9',
+    'USR001',
+    1
+);
+```
+
+### Llamada Típica a SP Listado Paginado
+```sql
+SELECT sp_centroscosto_listadopaginado(
+    'cursor1'::refcursor,
+    1,  -- página
+    10, -- registros por página
+    '', -- filtro ID
+    'Ventas', -- filtro nombre
+    'DP001', -- departamento
+    'LP001', -- lugar de pago
+    '12345678-9', -- empresa
+    0 -- debug
+);
+```
+
+---
+
+**Nota**: Esta guía debe seguirse consistentemente en todos los niveles para mantener la coherencia y facilitar el mantenimiento del código.
