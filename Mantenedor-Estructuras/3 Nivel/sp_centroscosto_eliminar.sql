@@ -1,7 +1,7 @@
 -- FUNCTION: public.sp_centroscosto_eliminar(refcursor, character varying, character varying, character varying, character varying, character varying)
 -- Eliminar centro de costo
 
--- DROP FUNCTION IF EXISTS public.sp_centroscosto_eliminar(refcursor, character varying, character varying, character varying, character varying, character varying);
+DROP FUNCTION IF EXISTS public.sp_centroscosto_eliminar(refcursor, character varying, character varying, character varying, character varying, character varying);
 
 CREATE OR REPLACE FUNCTION public.sp_centroscosto_eliminar(
 	p_refcursor refcursor,
