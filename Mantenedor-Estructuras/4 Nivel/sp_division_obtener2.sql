@@ -1,15 +1,15 @@
--- FUNCTION: public.sp_division_obtener(refcursor, character varying, character varying, character varying, character varying, character varying)
+-- FUNCTION: public.sp_division_obtener2(refcursor, character varying, character varying, character varying, character varying, character varying)
 -- Obtener una división específica
 
--- DROP FUNCTION IF EXISTS public.sp_division_obtener(refcursor, character varying, character varying, character varying, character varying, character varying);
+-- DROP FUNCTION IF EXISTS public.sp_division_obtener2(refcursor, character varying, character varying, character varying, character varying, character varying);
 
-CREATE OR REPLACE FUNCTION public.sp_division_obtener(
+CREATE OR REPLACE FUNCTION public.sp_division_obtener2(
 	p_refcursor refcursor,
-	p_pdivisionid character varying,
 	p_pempresaid character varying,
 	p_plugarpagoid character varying,
 	p_pdepartamentoid character varying,
-	p_pcentrocostoid character varying
+	p_pcentrocostoid character varying,
+	p_pdivisionid character varying
 )
     RETURNS refcursor
     LANGUAGE 'plpgsql'
@@ -19,9 +19,12 @@ AS $BODY$
 BEGIN
     OPEN p_refcursor FOR
         SELECT 
-            d.divisionid,
+            d.divisionid as divisionid,
+			d.divisionid as "idDivision",
             d.nombredivision,
-            d.empresaid,
+            d.empresaid as "empresaid",
+			d.empresaid as "RutEmpresa",
+			d.empresaid as "RazonSocial",
             d.direccion,
             d.comuna,
             d.ciudad,
@@ -61,8 +64,9 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $BODY$;
 
-ALTER FUNCTION public.sp_division_obtener(refcursor, character varying, character varying, character varying, character varying, character varying)
+ALTER FUNCTION public.sp_division_obtener2(refcursor, character varying, character varying, character varying, character varying, character varying)
     OWNER TO postgres;
 
-COMMENT ON FUNCTION public.sp_division_obtener(refcursor, character varying, character varying, character varying, character varying, character varying)
-    IS 'Obtener una división específica con información completa';
+COMMENT ON FUNCTION public.sp_division_obtener2(refcursor, character varying, character varying, character varying, character varying, character varying)
+    IS 'Obtener una División específica con información completa';
+

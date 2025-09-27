@@ -36,40 +36,40 @@ BEGIN
     -- 1) Conteo total con todos los filtros posibles
     SELECT COUNT(*) 
       INTO var_totalorig
-      FROM division div
-      JOIN centroscosto cc ON div.centrocostoid = cc.centrocostoid 
-                           AND div.departamentoid = cc.departamentoid 
-                           AND div.lugarpagoid = cc.lugarpagoid 
-                           AND div.empresaid = cc.empresaid
-      JOIN departamentos dp ON div.departamentoid = dp.departamentoid 
-                             AND div.lugarpagoid = dp.lugarpagoid 
-                             AND div.empresaid = dp.empresaid
-      JOIN lugarespago lp ON div.lugarpagoid = lp.lugarpagoid 
-                          AND div.empresaid = lp.empresaid
-      JOIN empresas e ON div.empresaid = e.rutempresa
+      FROM division d
+      JOIN centroscosto cc ON d.centrocostoid = cc.centrocostoid 
+                           AND d.departamentoid = cc.departamentoid 
+                           AND d.lugarpagoid = cc.lugarpagoid 
+                           AND d.empresaid = cc.empresaid
+      JOIN departamentos dp ON d.departamentoid = dp.departamentoid 
+                             AND d.lugarpagoid = dp.lugarpagoid 
+                             AND d.empresaid = dp.empresaid
+      JOIN lugarespago lp ON d.lugarpagoid = lp.lugarpagoid 
+                          AND d.empresaid = lp.empresaid
+      JOIN empresas e ON d.empresaid = e.rutempresa
      WHERE 
        -- Filtro por división (ID exacto o búsqueda por nombre)
        (p_pdivisionid = '' OR p_pdivisionid = '0'
-        OR div.divisionid = p_pdivisionid
-        OR div.nombredivision ILIKE '%' || p_pdivisionid || '%')
+        OR d.divisionid = p_pdivisionid
+        OR d.nombredivision ILIKE '%' || p_pdivisionid || '%')
        -- Filtro por nombre de división
        AND (p_pnombredivision = '' 
-            OR div.nombredivision ILIKE '%' || p_pnombredivision || '%')
+            OR d.nombredivision ILIKE '%' || p_pnombredivision || '%')
        -- Filtro por centro de costo (ID exacto o búsqueda por nombre)
        AND (p_pcentrocostoid = '' OR p_pcentrocostoid = '0'
-            OR div.centrocostoid = p_pcentrocostoid
+            OR d.centrocostoid = p_pcentrocostoid
             OR cc.nombrecentrocosto ILIKE '%' || p_pcentrocostoid || '%')
        -- Filtro por departamento (ID exacto o búsqueda por nombre)
        AND (p_pdepartamentoid = '' OR p_pdepartamentoid = '0'
-            OR div.departamentoid = p_pdepartamentoid
+            OR d.departamentoid = p_pdepartamentoid
             OR dp.nombredepartamento ILIKE '%' || p_pdepartamentoid || '%')
        -- Filtro por lugar de pago (ID exacto o búsqueda por nombre)
        AND (p_plugarpagoid = '' OR p_plugarpagoid = '0'
-            OR div.lugarpagoid = p_plugarpagoid
+            OR d.lugarpagoid = p_plugarpagoid
             OR lp.nombrelugarpago ILIKE '%' || p_plugarpagoid || '%')
        -- Filtro por empresa
        AND (p_pempresaid = '' OR p_pempresaid = '0'
-            OR div.empresaid = p_pempresaid
+            OR d.empresaid = p_pempresaid
             OR e.razonsocial ILIKE '%' || p_pempresaid || '%');
 
     -- 2) Cálculo de páginas

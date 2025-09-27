@@ -1,15 +1,15 @@
 -- FUNCTION: public.sp_division_eliminar(refcursor, character varying, character varying, character varying, character varying, character varying, character varying)
 -- Eliminar división
 
--- DROP FUNCTION IF EXISTS public.sp_division_eliminar(refcursor, character varying, character varying, character varying, character varying, character varying, character varying);
+DROP FUNCTION IF EXISTS public.sp_division_eliminar(refcursor, character varying, character varying, character varying, character varying, character varying, character varying);
 
 CREATE OR REPLACE FUNCTION public.sp_division_eliminar(
 	p_refcursor refcursor,
-	p_pdivisionid character varying,
-	p_pcentrocostoid character varying,
-	p_pdepartamentoid character varying,
-	p_plugarpagoid character varying,
 	p_pempresaid character varying,
+	p_plugarpagoid character varying,
+	p_pdepartamentoid character varying,
+	p_pcentrocostoid character varying,
+	p_pdivisionid character varying,
 	p_pusuarioid character varying
 )
     RETURNS refcursor
@@ -52,7 +52,7 @@ BEGIN
                 var_mensaje := '';
                 var_error   := 0;
             EXCEPTION WHEN OTHERS THEN
-                var_mensaje := 'Error al eliminar división: ' || SQLERRM;
+                var_mensaje := 'Error al eliminar División: ' || SQLERRM;
                 var_error   := 2;
             END;
         ELSE
@@ -60,7 +60,7 @@ BEGIN
             var_error   := 3;
         END IF;
     ELSE
-        var_mensaje := 'La División no existe';
+        var_mensaje := 'El División no existe';
         var_error   := 1;
     END IF;
 
@@ -75,4 +75,4 @@ ALTER FUNCTION public.sp_division_eliminar(refcursor, character varying, charact
     OWNER TO postgres;
 
 COMMENT ON FUNCTION public.sp_division_eliminar(refcursor, character varying, character varying, character varying, character varying, character varying, character varying)
-    IS 'Eliminar división';
+    IS 'Eliminar División';

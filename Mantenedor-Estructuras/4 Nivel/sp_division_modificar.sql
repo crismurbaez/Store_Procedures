@@ -1,16 +1,16 @@
 -- FUNCTION: public.sp_division_modificar(refcursor, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, integer)
 -- Modificar división existente
 
--- DROP FUNCTION IF EXISTS public.sp_division_modificar(refcursor, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, integer);
+DROP FUNCTION IF EXISTS public.sp_division_modificar(refcursor, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, integer);
 
 CREATE OR REPLACE FUNCTION public.sp_division_modificar(
     p_refcursor refcursor,
     p_pdivisionid character varying,
     p_pnombredivision character varying,
-    p_pcentrocostoid character varying,
-    p_pdepartamentoid character varying,
-    p_plugarpagoid character varying,
     p_pempresaid character varying,
+    p_plugarpagoid character varying,
+    p_pdepartamentoid character varying,
+    p_pcentrocostoid character varying,
     p_pdireccion character varying,
     p_pcomuna character varying,
     p_pciudad character varying,
@@ -54,11 +54,11 @@ BEGIN
             var_mensaje := '';
             var_error   := 0;
         EXCEPTION WHEN OTHERS THEN
-            var_mensaje := 'Error al modificar división: ' || SQLERRM;
+            var_mensaje := 'Error al modificar División: ' || SQLERRM;
             var_error   := 2;
         END;
     ELSE
-        var_mensaje := 'La División no existe';
+        var_mensaje := 'El División no existe';
         var_error   := 1;
     END IF;
 
@@ -80,4 +80,4 @@ ALTER FUNCTION public.sp_division_modificar(refcursor, character varying, charac
     OWNER TO postgres;
 
 COMMENT ON FUNCTION public.sp_division_modificar(refcursor, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, character varying, integer)
-    IS 'Modificar división existente';
+    IS 'Modificar División existente';

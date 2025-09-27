@@ -18,21 +18,21 @@ AS $BODY$
 BEGIN
     OPEN p_refcursor FOR
         SELECT 
-            D.divisionid AS "divisionid",
-            D.nombredivision AS "nombredivision",
-            D.centrocostoid AS "centrocostoid",
-            D.departamentoid AS "departamentoid",
-            D.lugarpagoid AS "lugarpagoid",
-            ('''' || D.divisionid || '''') AS "div"
+            d.divisionid AS "divisionid",
+            d.nombredivision AS "nombredivision",
+            d.centrocostoid AS "centrocostoid",
+            d.departamentoid AS "departamentoid",
+            d.lugarpagoid AS "lugarpagoid",
+            ('''' || d.divisionid || '''') AS "cc"
         FROM 
-            division D
+            division d
         WHERE 
-            D.empresaid = pempresaid
-            AND D.lugarpagoid = plugarpagoid
-            AND D.departamentoid = pdepartamentoid
-            AND D.centrocostoid = pcentrocostoid
+            d.empresaid = pempresaid
+            AND d.lugarpagoid = plugarpagoid
+            AND d.departamentoid = pdepartamentoid
+            AND d.centrocostoid = pcentrocostoid
         ORDER BY 
-            D.nombredivision;
+            d.nombredivision;
     
     RETURN p_refcursor;
 
