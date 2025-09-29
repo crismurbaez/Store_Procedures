@@ -1,7 +1,7 @@
 -- FUNCTION: public.sp_centroscosto_modificar(refcursor, character varying, character varying, character varying, character varying, character varying, character varying, character varying, integer)
 -- Modificar centro de costo existente
 
--- DROP FUNCTION IF EXISTS public.sp_centroscosto_modificar(refcursor, character varying, character varying, character varying, character varying, character varying, character varying, character varying, integer);
+DROP FUNCTION IF EXISTS public.sp_centroscosto_modificar(refcursor, varchar, varchar, varchar, varchar, varchar, varchar, varchar, int4);
 
 CREATE OR REPLACE FUNCTION public.sp_centroscosto_modificar(
 	p_refcursor refcursor,

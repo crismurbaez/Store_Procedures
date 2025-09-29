@@ -1,5 +1,4 @@
 -- FUNCTION: public.sp_division_listadopaginado(refcursor, integer, integer, character varying, character varying, character varying, character varying, character varying, character varying, smallint)
--- Listado paginado de divisiones con filtros de búsqueda
 
 -- DROP FUNCTION IF EXISTS public.sp_division_listadopaginado(refcursor, integer, integer, character varying, character varying, character varying, character varying, character varying, character varying, smallint);
 
@@ -13,8 +12,7 @@ CREATE OR REPLACE FUNCTION public.sp_division_listadopaginado(
 	p_pdepartamentoid character varying,
 	p_plugarpagoid character varying,
 	p_pempresaid character varying,
-	p_debug smallint DEFAULT 0
-)
+	p_debug smallint DEFAULT 0)
     RETURNS refcursor
     LANGUAGE 'plpgsql'
     COST 100
@@ -33,62 +31,55 @@ BEGIN
     OPEN p_refcursor FOR
     WITH DocumentosTabla AS (
         SELECT
-            d.divisionid as "idDivision",
-            d.divisionid as divisionid,
-            d.nombredivision,
-            d.centrocostoid,
+            div.divisionid,
+            div.nombredivision,
+            div.centrocostoid,
             cc.nombrecentrocosto,
-            d.departamentoid,
+            div.departamentoid,
             dp.nombredepartamento,
-            d.lugarpagoid,
+            div.lugarpagoid,
             lp.nombrelugarpago,
-            d.empresaid,
-            d.empresaid as "RutEmpresa",
+            div.empresaid,
             e.razonsocial,
-            ROW_NUMBER() OVER (ORDER BY d.nombredivision) AS RowNum
-        FROM division d
-        JOIN centroscosto cc ON d.centrocostoid = cc.centrocostoid 
-                             AND d.departamentoid = cc.departamentoid 
-                             AND d.lugarpagoid = cc.lugarpagoid 
-                             AND d.empresaid = cc.empresaid
-        JOIN departamentos dp ON d.departamentoid = dp.departamentoid 
-                               AND d.lugarpagoid = dp.lugarpagoid 
-                               AND d.empresaid = dp.empresaid
-        JOIN lugarespago lp ON d.lugarpagoid = lp.lugarpagoid 
-                            AND d.empresaid = lp.empresaid
-        JOIN empresas e ON d.empresaid = e.rutempresa
+            ROW_NUMBER() OVER (ORDER BY div.nombredivision) AS RowNum
+        FROM division div
+        JOIN centroscosto cc ON div.centrocostoid = cc.centrocostoid 
+                             AND div.departamentoid = cc.departamentoid 
+                             AND div.lugarpagoid = cc.lugarpagoid 
+                             AND div.empresaid = cc.empresaid
+        JOIN departamentos dp ON div.departamentoid = dp.departamentoid 
+                               AND div.lugarpagoid = dp.lugarpagoid 
+                               AND div.empresaid = dp.empresaid
+        JOIN lugarespago lp ON div.lugarpagoid = lp.lugarpagoid 
+                            AND div.empresaid = lp.empresaid
+        JOIN empresas e ON div.empresaid = e.rutempresa
         WHERE
             -- Filtro por división (ID exacto o búsqueda por nombre)
             (p_pdivisionid = '' OR p_pdivisionid = '0' 
-             OR d.divisionid = p_pdivisionid 
-             OR d.nombredivision ILIKE '%' || p_pdivisionid || '%')
+             OR div.divisionid = p_pdivisionid) 
         AND 
             -- Filtro por nombre de división
             (p_pnombredivision = '' 
-             OR d.nombredivision ILIKE '%' || p_pnombredivision || '%')
+             OR div.nombredivision ILIKE '%' || p_pnombredivision || '%')
         AND 
             -- Filtro por centro de costo (ID exacto o búsqueda por nombre)
             (p_pcentrocostoid = '' OR p_pcentrocostoid = '0' 
-             OR d.centrocostoid = p_pcentrocostoid 
-             OR cc.nombrecentrocosto ILIKE '%' || p_pcentrocostoid || '%')
+             OR div.centrocostoid = p_pcentrocostoid) 
         AND 
             -- Filtro por departamento (ID exacto o búsqueda por nombre)
             (p_pdepartamentoid = '' OR p_pdepartamentoid = '0' 
-             OR d.departamentoid = p_pdepartamentoid 
-             OR dp.nombredepartamento ILIKE '%' || p_pdepartamentoid || '%')
+             OR div.departamentoid = p_pdepartamentoid)
         AND 
             -- Filtro por lugar de pago (ID exacto o búsqueda por nombre)
             (p_plugarpagoid = '' OR p_plugarpagoid = '0' 
-             OR d.lugarpagoid = p_plugarpagoid 
-             OR lp.nombrelugarpago ILIKE '%' || p_plugarpagoid || '%')
+             OR div.lugarpagoid = p_plugarpagoid)
         AND 
             -- Filtro por empresa
             (p_pempresaid = '' OR p_pempresaid = '0' 
-             OR d.empresaid = p_pempresaid 
+             OR div.empresaid = p_pempresaid 
              OR e.razonsocial ILIKE '%' || p_pempresaid || '%')
     )
     SELECT
-        "idDivision",
         divisionid,
         nombredivision,
         centrocostoid,
@@ -98,7 +89,7 @@ BEGIN
         lugarpagoid,
         nombrelugarpago,
         empresaid,
-        "RutEmpresa",
+        empresaid AS "RutEmpresa",
         razonsocial,
         RowNum
     FROM DocumentosTabla
