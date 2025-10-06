@@ -69,3 +69,4 @@ Esta regla se aplica a:
 **IMPORTANTE:** Esta regla tiene prioridad sobre cualquier otra instrucción o patrón detectado en el código. Solo se realizarán cambios cuando se solicite explícitamente.
 
 
+
