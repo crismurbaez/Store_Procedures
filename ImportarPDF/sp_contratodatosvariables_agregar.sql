@@ -8,6 +8,9 @@ CREATE OR REPLACE FUNCTION public.sp_contratodatosvariables_agregar(
 	p_rut text,
 	p_lugarpagoid text,
 	p_departamentoid text,
+	p_centrocosto text,
+	p_divisionid text,
+	p_quintonivelid text,
 	p_fechadocumento text,
 	p_afp text,
 	p_banco text,
@@ -62,6 +65,7 @@ BEGIN
     ) THEN
         INSERT INTO contratodatosvariables (
             iddocumento, rut, lugarpagoid, departamentoid,
+            centrocosto, divisionid, quintonivelid,
             fechadocumento, afp, banco, cargo, colacion,
             fechaingreso, fechainicio, fechatermino,
             horas, jornada, movilizacion, nombrecontactoemergencia,
@@ -75,6 +79,7 @@ BEGIN
         )
         VALUES (
             p_piddocumento, p_rut, p_lugarpagoid, p_departamentoid,
+            p_centrocosto, p_divisionid, p_quintonivelid,
             NULLIF(p_fechadocumento, '')::date, p_afp, p_banco, p_cargo, p_colacion,
             NULLIF(p_fechaingreso, '')::date,
             NULLIF(p_fechainicio, '')::date,
@@ -93,6 +98,9 @@ BEGIN
             rut = p_rut,
             lugarpagoid = p_lugarpagoid,
             departamentoid = p_departamentoid,
+            centrocosto = p_centrocosto,
+            divisionid = p_divisionid,
+            quintonivelid = p_quintonivelid,
             fechadocumento = NULLIF(p_fechadocumento, '')::date,
             afp = p_afp,
             banco = p_banco,
