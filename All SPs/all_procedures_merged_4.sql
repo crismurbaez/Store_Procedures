@@ -768,9 +768,6 @@ $BODY$;
 
 
 
-COMMENT ON FUNCTION public.sp_consultageneral_total(refcursor, integer, character varying, character varying, character varying, character varying, character varying, character varying, integer, integer, character varying, date, date, character varying, integer, numeric)
-    IS 'Obtiene el total de páginas de la consulta según parámetros para paginación';-- FUNCTION: public.sp_descargamasiva_consulta_listado(refcursor, integer, numeric, character varying, integer, smallint)
-
 -- DROP FUNCTION IF EXISTS public.sp_descargamasiva_consulta_listado(refcursor, integer, numeric, character varying, integer, smallint);
 
 CREATE OR REPLACE FUNCTION public.sp_descargamasiva_consulta_listado(
